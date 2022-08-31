@@ -1,58 +1,160 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <v-app id="inspire" >
+    <v-alert
+      :value="alert"
+      prominent
+      type="error"
+    >{{alertMessage}}</v-alert>
+
+      
+    <v-main>
+      <v-container>
+        <v-row class="pt-8">
+          <v-col cols="16" sm="9">
+            <v-card>
+              <v-img
+                lazy-src="https://picsum.photos/id/11/10/6"
+                max-height="100%"
+                max-width="100%"
+                src="https://picsum.photos/id/11/500/300"
+              ></v-img>
+            </v-card>
+            
+            <v-row  class="pt-8">
+              <v-col cols="10">
+              <v-textarea
+                rows="1"
+                outlined
+                auto-grow
+                label="Prompt"
+                value="Default Value"
+                ></v-textarea>
+              </v-col>
+              <v-col cols="2">
+              <v-btn
+                label="generate"
+                class="white--text"
+                elevation="2"
+                outlined
+                @click="onGenerate"
+                >generate</v-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+
+          <v-col
+            cols="8"
+            sm="3"
+          >
+
+          <v-subheader class="pl-0">
+            Width
+          </v-subheader>
+          <v-slider 
+            :label="width.val"
+            v-model="width.val"
+            :thumb-color="width.color"
+            :min="512"
+            :max="1024"
+            step="64"
+            ticks="always"
+            tick-size="2"
+            thumb-label
+            inverse-label
+            ></v-slider>
+
+          <v-subheader class="pl-0">
+            Height
+          </v-subheader>
+          <v-slider 
+            :label="height.val"
+            v-model="height.val"
+            :thumb-color="height.color"
+            :min="512"
+            :max="1024"
+            step="64"
+            ticks="always"
+            tick-size="2"
+            thumb-label
+            inverse-label
+            ></v-slider>
+
+          <v-subheader class="pl-0">
+            Scale
+          </v-subheader>
+          <v-slider 
+            :label="scale.val"
+            v-model="scale.val"
+            :thumb-color="scale.color"
+            :min="1"
+            :max="20"
+            thumb-label
+            inverse-label
+            ></v-slider>
+          <v-subheader class="pl-0">
+            Steps
+          </v-subheader>
+          <v-slider 
+            :label="steps.val"
+            v-model="steps.val"
+            :thumb-color="scale.color"
+            :min="10"
+            :max="150"
+            thumb-label
+            inverse-label
+            ></v-slider>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  export default {
+    data: () => ({
+      alert: false,
+      alertMessage: "Warning, generated images contained some not safe for work content and have been replaced.",
+      links: [
+        'Dashboard',
+        'Messages',
+        'Profile',
+        'Updates',
+      ],
+      width: { label: 'width', val: 512, color: 'blue lighten-1'},
+      height: { label: 'height', val: 512, color: 'blue lighten-1'},
+      scale: { label: 'scale', val: 7, color: 'blue lighten-1' },
+      steps: { label: 'steps', val: 50, color: 'blue lighten-1' },
+    }),
+    methods: {
+      onGenerate() {
+        this.warning("some warning");
+      },
+      warning(text) {
+        this.alertMessage = text
+        this.alert = true;
+        window.setTimeout(() => {
+          this.alert = false;
+          console.log("hide alert after 3 seconds");
+        }, 3000) 
+      }
+    }
   }
-}
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+html { overflow-y: auto }
+.theme--dark.v-application {
+  background-color: var(--v-background-base, #121212) !important;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+.theme--light.v-application {
+  background-color: var(--v-background-base, white) !important;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+.v-alert {
+  position: fixed;
+  top: 0px;
+  width:100%;
+  margin: 0 auto; 
+  z-index:1000;
 }
 </style>
