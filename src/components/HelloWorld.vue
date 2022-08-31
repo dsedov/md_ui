@@ -8,24 +8,25 @@
 
       
     <v-main>
-      <v-container>
-        <v-row class="pt-8">
-          <v-col cols="16" sm="9">
-            <v-card>
+      <v-container style="height: 100vh;">
+        <v-row class="pt-8 fill-height" >
+          <v-col cols="16" sm="9" class="fill-height">
+            <v-row style="min-height:calc(100vh - 200px)">
               <v-img
                 lazy-src="https://picsum.photos/id/11/10/6"
                 max-height="100%"
                 max-width="100%"
-                src="https://picsum.photos/id/11/500/300"
+                v-if="showImage"
+                :src="generatedImage"
+                @load="onImageLoad"
               ></v-img>
-            </v-card>
+            </v-row>
             
             <v-row  class="pt-8">
               <v-col cols="10">
               <v-textarea
-                rows="1"
+                rows="2"
                 outlined
-                auto-grow
                 label="Prompt"
                 value="Default Value"
                 ></v-textarea>
@@ -114,6 +115,8 @@
   export default {
     data: () => ({
       alert: false,
+      showImage: false,
+      generatedImage: "imagepath",
       alertMessage: "Warning, generated images contained some not safe for work content and have been replaced.",
       links: [
         'Dashboard',
@@ -128,7 +131,12 @@
     }),
     methods: {
       onGenerate() {
-        this.warning("some warning");
+        this.generatedImage = "https://images.unsplash.com/photo-1661386290029-914a541a1995?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80";
+        this.showImage = true
+        //this.warning("some warning");
+      },
+      onImageLoad(){
+
       },
       warning(text) {
         this.alertMessage = text
