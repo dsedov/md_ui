@@ -8,104 +8,92 @@
 
       
     <v-main>
-      <v-container style="height: 100vh;">
-        <v-row class="pt-8 fill-height" >
-          <v-col cols="16" sm="9" class="fill-height">
-            <v-row style="min-height:calc(100vh - 200px)">
-              <v-img
-                lazy-src="https://picsum.photos/id/11/10/6"
-                max-height="100%"
-                max-width="100%"
-                v-if="showImage"
-                :src="generatedImage"
-                @load="onImageLoad"
-              ></v-img>
-            </v-row>
-            
-            <v-row  class="pt-8">
-              <v-col cols="10">
+      <v-container style="height:100%;width:100%;max-width:100%;padding:30px;display: flex;flex-direction: column;">
+        <v-row class="" style="flex: 1;height:100%;">
+          <v-col cols="16" sm="9" class="rounded-lg" style="background-color: #101010;padding:10px;height:100%;">
+              
+          </v-col>
+          <v-col class="rounded-lg ml-3" style="background-color: #101010;width:100%;">
+            <v-subheader class="pl-0">
+              Width
+            </v-subheader>
+            <v-slider 
+              :label="width.val"
+              v-model="width.val"
+              :thumb-color="width.color"
+              :min="512"
+              :max="1024"
+              step="64"
+              ticks="always"
+              tick-size="2"
+              thumb-label
+              inverse-label
+              ></v-slider>
+
+            <v-subheader class="pl-0">
+              Height
+            </v-subheader>
+            <v-slider 
+              :label="height.val"
+              v-model="height.val"
+              :thumb-color="height.color"
+              :min="512"
+              :max="1024"
+              step="64"
+              ticks="always"
+              tick-size="2"
+              thumb-label
+              inverse-label
+              ></v-slider>
+
+            <v-subheader class="pl-0">
+              Scale
+            </v-subheader>
+            <v-slider 
+              :label="scale.val"
+              v-model="scale.val"
+              :thumb-color="scale.color"
+              :min="1"
+              :max="20"
+              thumb-label
+              inverse-label
+              ></v-slider>
+            <v-subheader class="pl-0">
+              Steps
+            </v-subheader>
+            <v-slider 
+              :label="steps.val"
+              v-model="steps.val"
+              :thumb-color="scale.color"
+              :min="10"
+              :max="150"
+              thumb-label
+              inverse-label
+              ></v-slider>
+            <v-spacer></v-spacer>
+          </v-col>
+        </v-row>
+        <v-row  class="mt-6 rounded-lg " style="background-color: #101010;flex: none;">
+          <v-col cols="10">
               <v-textarea
                 rows="2"
                 outlined
                 label="Prompt"
                 value="Default Value"
                 ></v-textarea>
-              </v-col>
-              <v-col cols="2">
+          </v-col>
+          <v-col cols="2">
               <v-btn
+                rounded
                 label="generate"
+                style="height:100%;width:100%;"
                 class="white--text"
                 elevation="2"
                 outlined
                 @click="onGenerate"
                 >generate</v-btn>
               </v-col>
-            </v-row>
-          </v-col>
-
-          <v-col
-            cols="8"
-            sm="3"
-          >
-
-          <v-subheader class="pl-0">
-            Width
-          </v-subheader>
-          <v-slider 
-            :label="width.val"
-            v-model="width.val"
-            :thumb-color="width.color"
-            :min="512"
-            :max="1024"
-            step="64"
-            ticks="always"
-            tick-size="2"
-            thumb-label
-            inverse-label
-            ></v-slider>
-
-          <v-subheader class="pl-0">
-            Height
-          </v-subheader>
-          <v-slider 
-            :label="height.val"
-            v-model="height.val"
-            :thumb-color="height.color"
-            :min="512"
-            :max="1024"
-            step="64"
-            ticks="always"
-            tick-size="2"
-            thumb-label
-            inverse-label
-            ></v-slider>
-
-          <v-subheader class="pl-0">
-            Scale
-          </v-subheader>
-          <v-slider 
-            :label="scale.val"
-            v-model="scale.val"
-            :thumb-color="scale.color"
-            :min="1"
-            :max="20"
-            thumb-label
-            inverse-label
-            ></v-slider>
-          <v-subheader class="pl-0">
-            Steps
-          </v-subheader>
-          <v-slider 
-            :label="steps.val"
-            v-model="steps.val"
-            :thumb-color="scale.color"
-            :min="10"
-            :max="150"
-            thumb-label
-            inverse-label
-            ></v-slider>
-          </v-col>
-        </v-row>
+          </v-row>
       </v-container>
     </v-main>
   </v-app>
