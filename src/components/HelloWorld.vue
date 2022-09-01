@@ -6,7 +6,7 @@
 
       </v-list>
     </v-navigation-drawer>
-    <v-main app style="display: flex;justify-content: center;align-items: center;">
+    <v-main app style="display: flex;justify-content: center;align-items: center;" id="main">
       <v-container fluid id="imgcontainer">
 
       </v-container>
@@ -116,12 +116,8 @@
 <style >
   #imgcontainer > img {
     display:block;
-    height:calc(100vh - 100px);
-    width:auto;
-    margin-left: auto;
+    margin-left:auto;
     margin-right:auto;
-    max-width:100%;
-    max-height:100%
   }
   ::-webkit-scrollbar {
     width: 15px;
@@ -162,6 +158,8 @@
       scale: { label: 'scale', val: 7, color: 'blue lighten-1' },
       steps: { label: 'steps', val: 50, color: 'blue lighten-1' },
     }),
+    created() {window.addEventListener("resize", this.onWindowResize);},
+    destroyed() {window.removeEventListener("resize", this.onWindowResize);},
     methods: {
       onSave() {
         var a = document.createElement("a");
@@ -176,12 +174,16 @@
         var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val + "&seed=" + seedNumber
         document.querySelector('#imgcontainer').innerHTML = ''
         let img = document.createElement('img')
+        img.id = "display_image"
         var downloadingImage = new Image();
         downloadingImage.onload = function(){
-          img.src  = this.src;   
+          img.src  = this.src; 
+          img.width = this.width;
+          img.height = this.height;  
         };
         downloadingImage.src = imgUrl;
         document.querySelector('#imgcontainer').appendChild(img)
+        this.onWindowResize()
         /*
         var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val
         this.currentImageUrl = imgUrl;
@@ -214,6 +216,26 @@
       },
       onImageLoad(){
 
+      },
+      
+      onWindowResize(){
+        var image_container = document.querySelector('#main');
+        var display_image = document.querySelector('#display_image');
+        var width = image_container.offsetWidth;
+        var height = window.innerHeight-80;
+        
+        var img_ar = display_image.getAttribute("width") / display_image.getAttribute("height");
+        
+        var img_width = width;
+        var img_height = img_width * img_ar;
+        if(img_height > height){
+          img_height = height;
+          img_width = img_height * img_ar;
+        }
+
+        console.log("AR:" + img_ar )
+        display_image.style.width = img_width + "px";
+        display_image.style.height = img_height + "px";
       },
       warning(text) {
         this.alertMessage = text
