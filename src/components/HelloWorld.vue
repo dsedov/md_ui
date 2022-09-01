@@ -1,20 +1,18 @@
 <template>
-  <v-app id="inspire" >
-    <v-alert
-      :value="alert"
-      prominent
-      type="error"
-    >{{alertMessage}}</v-alert>
+  <v-app id="inspire">
+    <v-alert app :value="alert" prominent type="error">{{alertMessage}}</v-alert>
+    <v-navigation-drawer app clipped permanent left width="150px" color="transparent" class="pa-2 invisible-scrollbar">
+      <v-list id="historycontainer">
 
-      
-    <v-main>
-      <v-container style="height:100%;width:100%;max-width:100%;padding:30px;display: flex;flex-direction: column;">
-        <v-row class="" style="flex: 1;height:100%;">
-          <v-col cols="16" sm="9" class="rounded-lg" style="background-color: #101010;padding:10px;height:100%;">
-              
-          </v-col>
-          <v-col class="rounded-lg ml-3" style="background-color: #101010;width:100%;">
-            <v-subheader class="pl-0">
+      </v-list>
+    </v-navigation-drawer>
+    <v-main app style="display: flex;justify-content: center;align-items: center;">
+      <v-container fluid id="imgcontainer">
+
+      </v-container>
+    </v-main>
+    <v-navigation-drawer app clipped permanent right color="transparent" class="pa-6">
+      <v-subheader class="pl-0">
               Width
             </v-subheader>
             <v-slider 
@@ -70,40 +68,87 @@
               thumb-label
               inverse-label
               ></v-slider>
-            <v-spacer></v-spacer>
-          </v-col>
-        </v-row>
-        <v-row  class="mt-6 rounded-lg " style="background-color: #101010;flex: none;">
-          <v-col cols="10">
-              <v-textarea
-                rows="2"
-                outlined
-                label="Prompt"
-                value="Default Value"
-                ></v-textarea>
-          </v-col>
-          <v-col cols="2">
-              <v-btn
-                rounded
-                label="generate"
-                style="height:100%;width:100%;"
-                class="white--text"
-                elevation="2"
-                outlined
-                @click="onGenerate"
-                >generate</v-btn>
-              </v-col>
+            <v-subheader class="pl-0">
+              Seed
+            </v-subheader>
+            <v-text-field
+              solo
+              flat
+              dense
+              :value="seed"
+            ></v-text-field>
+            <v-btn
+     
+                  solo
+                  elevation="0"
+
+                  label="save"
+                  @click="onSave"
+                  >save</v-btn>
+    </v-navigation-drawer>
+    
+    <v-footer app color="transparent" height="74" inset class="pl-0">
+      <v-container>
+        <v-row>
+                <v-text-field
+                  class="ma-4"
+                  filled
+                  solo
+                  flat
+                  dense
+                  v-model="prompt.val"
+                  ></v-text-field>
+                <v-btn
+                  class="mt-4 mr-4 mb-4"
+                  solo
+                  elevation="0"
+                  style="padding:20px;"
+                  label="generate"
+                  @click="onGenerate"
+                  >generate</v-btn>
+  
           </v-row>
-      </v-container>
-    </v-main>
+        </v-container>
+    </v-footer>
+    
   </v-app>
 </template>
-
+<style >
+  #imgcontainer > img {
+    display:block;
+    height:calc(100vh - 100px);
+    width:auto;
+    margin-left: auto;
+    margin-right:auto;
+    max-width:100%;
+    max-height:100%
+  }
+  ::-webkit-scrollbar {
+    width: 15px;
+  }
+  ::-webkit-scrollbar-track {
+    background: black;
+    opacity: 0.5;
+  }
+  ::-webkit-scrollbar-thumb {
+    background:#181818;
+    opacity: 0.5;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2c2c2c;
+    opacity: 1.0;
+  }
+</style>
 <script>
   export default {
     data: () => ({
       alert: false,
+      prompt: { val: "magical forest painting by peter mohrbacher and georges seurat"},
       showImage: false,
+      currentImageData: 0,
+      currentImageUrl: "test.html",
+      currentImageName: "no_name.jpg",
+      seed:0,
       generatedImage: "imagepath",
       alertMessage: "Warning, generated images contained some not safe for work content and have been replaced.",
       links: [
@@ -118,10 +163,54 @@
       steps: { label: 'steps', val: 50, color: 'blue lighten-1' },
     }),
     methods: {
+      onSave() {
+        var a = document.createElement("a");
+        a.href = this.currentImageUrl,
+        a.download = this.currentImageName,
+        a.click()  
+        console.log(a.href)
+      },
       onGenerate() {
-        this.generatedImage = "https://images.unsplash.com/photo-1661386290029-914a541a1995?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80";
-        this.showImage = true
-        //this.warning("some warning");
+        var seedNumber = Math.floor(Math.random() * 100000000);
+        this.seed = seedNumber
+        var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val + "&seed=" + seedNumber
+        document.querySelector('#imgcontainer').innerHTML = ''
+        let img = document.createElement('img')
+        var downloadingImage = new Image();
+        downloadingImage.onload = function(){
+          img.src  = this.src;   
+        };
+        downloadingImage.src = imgUrl;
+        document.querySelector('#imgcontainer').appendChild(img)
+        /*
+        var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val
+        this.currentImageUrl = imgUrl;
+        fetch(imgUrl,
+          {method:"GET"}
+        )
+        .then((response) => {
+          this.currentImageName = response.headers.get("file-name")
+          this.seed = response.headers.get("seed-number")
+          response.blob().then(blobResponse => {
+            let reader = new FileReader();
+            reader.readAsDataURL(blobResponse); 
+            reader.onloadend = function() {
+              let base64data = reader.result; 
+              let img = document.createElement('img')
+              img.src = base64data  
+              
+              this.currentImageData = base64data.replace("data:image/png;base64,","")
+              
+              document.querySelector('#imgcontainer').innerHTML = ''
+              document.querySelector('#imgcontainer').appendChild(img)
+
+              let img_hist = document.createElement('img')
+              img_hist.setAttribute("style", "max-width:100%;")
+              img_hist.src = base64data 
+              document.querySelector('#historycontainer').insertBefore(img_hist, document.querySelector('#historycontainer').firstChild)
+            }
+          })
+        }); */
       },
       onImageLoad(){
 
@@ -138,19 +227,3 @@
   }
 </script>
 
-<style scoped>
-html { overflow-y: auto }
-.theme--dark.v-application {
-  background-color: var(--v-background-base, #121212) !important;
-}
-.theme--light.v-application {
-  background-color: var(--v-background-base, white) !important;
-}
-.v-alert {
-  position: fixed;
-  top: 0px;
-  width:100%;
-  margin: 0 auto; 
-  z-index:1000;
-}
-</style>
