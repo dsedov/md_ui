@@ -7,8 +7,19 @@
       </v-list>
     </v-navigation-drawer>
     <v-main app style="display: flex;justify-content: center;align-items: center;" id="main">
-      <v-container fluid id="imgcontainer">
-
+      <v-overlay :value="overlay" opacity="0.9">
+          <v-progress-circular
+            :rotate="360"
+            :size="100"
+            :width="15"
+            :value="progress"
+            color="teal"
+          >
+            {{ progress }}
+          </v-progress-circular>
+      </v-overlay>
+      <v-container fluid id="imgcontainer" style="display:block;">
+        
       </v-container>
     </v-main>
     <v-navigation-drawer app clipped permanent right color="transparent" class="pa-6">
@@ -115,9 +126,15 @@
 </template>
 <style >
   #imgcontainer > img {
-    display:block;
-    margin-left:auto;
-    margin-right:auto;
+    display: block;
+    object-fit: contain;
+    min-width:100%;
+    min-height:100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  #historycontainer > img {
+    max-width: 100%;
   }
   ::-webkit-scrollbar {
     width: 15px;
@@ -138,13 +155,17 @@
 <script>
   export default {
     data: () => ({
+      progress: 0,
+      progressInterval: {},
       alert: false,
+      overlay: false,
       prompt: { val: "magical forest painting by peter mohrbacher and georges seurat"},
       showImage: false,
       currentImageData: 0,
       currentImageUrl: "test.html",
       currentImageName: "no_name.jpg",
       seed:0,
+      image_id:'',
       generatedImage: "imagepath",
       alertMessage: "Warning, generated images contained some not safe for work content and have been replaced.",
       links: [
@@ -158,8 +179,12 @@
       scale: { label: 'scale', val: 7, color: 'blue lighten-1' },
       steps: { label: 'steps', val: 50, color: 'blue lighten-1' },
     }),
-    created() {window.addEventListener("resize", this.onWindowResize);},
-    destroyed() {window.removeEventListener("resize", this.onWindowResize);},
+    created() {
+      window.addEventListener("resize", this.onWindowResize);
+    },
+    destroyed() {
+      window.removeEventListener("resize", this.onWindowResize);
+    },
     methods: {
       onSave() {
         var a = document.createElement("a");
@@ -168,74 +193,61 @@
         a.click()  
         console.log(a.href)
       },
-      onGenerate() {
-        var seedNumber = Math.floor(Math.random() * 100000000);
-        this.seed = seedNumber
-        var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val + "&seed=" + seedNumber
-        document.querySelector('#imgcontainer').innerHTML = ''
-        let img = document.createElement('img')
-        img.id = "display_image"
-        var downloadingImage = new Image();
-        downloadingImage.onload = function(){
-          img.src  = this.src; 
-          img.width = this.width;
-          img.height = this.height;  
-        };
-        downloadingImage.src = imgUrl;
-        document.querySelector('#imgcontainer').appendChild(img)
-        this.onWindowResize()
-        /*
-        var imgUrl = "http://192.168.4.214:8000/prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val
-        this.currentImageUrl = imgUrl;
-        fetch(imgUrl,
-          {method:"GET"}
-        )
-        .then((response) => {
-          this.currentImageName = response.headers.get("file-name")
-          this.seed = response.headers.get("seed-number")
-          response.blob().then(blobResponse => {
-            let reader = new FileReader();
-            reader.readAsDataURL(blobResponse); 
-            reader.onloadend = function() {
-              let base64data = reader.result; 
-              let img = document.createElement('img')
-              img.src = base64data  
-              
-              this.currentImageData = base64data.replace("data:image/png;base64,","")
-              
-              document.querySelector('#imgcontainer').innerHTML = ''
-              document.querySelector('#imgcontainer').appendChild(img)
-
-              let img_hist = document.createElement('img')
-              img_hist.setAttribute("style", "max-width:100%;")
-              img_hist.src = base64data 
-              document.querySelector('#historycontainer').insertBefore(img_hist, document.querySelector('#historycontainer').firstChild)
+      onGenerate(){
+        fetch(this.api_server + "/submit_prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val)
+          .then(response => response.json())
+          .then(data => {
+            if(data.result == "OK"){
+              this.seed = data.seed;
+              this.image_id = data.id;
+              this.overlay = true;
+              this.progressInterval = setInterval(() => {
+                if (this.progress === 100) {
+                  // Check image
+                  fetch(this.api_server + "/check_prompt/?id=" + this.image_id )
+                  .then(response => response.json())
+                  .then(data => {
+                    if(data.result == "OK"){
+                      this.overlay = false
+                      this.progress = 0
+                      clearInterval(this.progressInterval)
+                      var imgUrl = this.api_server + "/download_prompt/?id=" + this.image_id
+                      document.querySelector('#imgcontainer').innerHTML = ''
+                      
+                      let img = document.createElement('img')
+                      let imgHist = document.createElement('img')
+                      img.id = "display_image"
+                      var downloadingImage = new Image();
+                      downloadingImage.onload = function() {
+                        img.src  = this.src; 
+                        imgHist.src = this.src; 
+                      }
+                      downloadingImage.src = imgUrl;
+                      document.querySelector('#imgcontainer').appendChild(img)
+                      document.querySelector('#historycontainer').insertBefore(imgHist, document.querySelector('#historycontainer').firstChild);
+                  
+                    } else {
+                      this.progress = 50
+                    }
+                  });
+                }
+                this.progress += 10
+              }, 600);
+            } else if (data.result == "ERROR") {
+              this.warning(data.message);
             }
-          })
-        }); */
+            console.log(data);
+          });
+          
       },
-      onImageLoad(){
-
-      },
-      
       onWindowResize(){
+        var container = document.querySelector('#imgcontainer');
         var image_container = document.querySelector('#main');
-        var display_image = document.querySelector('#display_image');
         var width = image_container.offsetWidth;
-        var height = window.innerHeight-80;
-        
-        var img_ar = display_image.getAttribute("width") / display_image.getAttribute("height");
-        
-        var img_width = width;
-        var img_height = img_width * img_ar;
-        if(img_height > height){
-          img_height = height;
-          img_width = img_height * img_ar;
-        }
+        var height = window.innerHeight-90;
 
-        console.log("AR:" + img_ar )
-        display_image.style.width = img_width + "px";
-        display_image.style.height = img_height + "px";
+        container.style.width = width + "px";
+        container.style.height = height + "px";
       },
       warning(text) {
         this.alertMessage = text
