@@ -2,9 +2,16 @@
   <v-app id="inspire">
     <v-alert app :value="alert" prominent type="error">{{alertMessage}}</v-alert>
     <v-navigation-drawer app clipped permanent left width="150px" color="transparent" class="pa-2 invisible-scrollbar">
-      <v-list id="historycontainer">
-
+      <v-list ref="history_container" id="historycontainer">
+        <img 
+          class="imgh" 
+          v-for="im in image_history" :key="im.id" 
+          :src="im.url" 
+          :seed="im.seed"
+          :prompt="im.prompt" 
+          @click="image_click" />
       </v-list>
+      
     </v-navigation-drawer>
     <v-main app style="display: flex;justify-content: center;align-items: center;" id="main">
       <v-overlay :value="overlay" opacity="0.9">
@@ -22,16 +29,17 @@
         
       </v-container>
     </v-main>
-    <v-navigation-drawer app clipped permanent right color="transparent" class="pa-6">
-      <v-subheader class="pl-0">
+    <v-navigation-drawer app clipped permanent right color="transparent" class="pa-0">
+            <v-subheader>
               Width
             </v-subheader>
             <v-slider 
+              class="ml-4 mr-4"
               :label="width.val"
               v-model="width.val"
               :thumb-color="width.color"
               :min="512"
-              :max="1024"
+              :max="768"
               step="64"
               ticks="always"
               tick-size="2"
@@ -39,15 +47,16 @@
               inverse-label
               ></v-slider>
 
-            <v-subheader class="pl-0">
+            <v-subheader>
               Height
             </v-subheader>
             <v-slider 
+              class="ml-4 mr-4"
               :label="height.val"
               v-model="height.val"
               :thumb-color="height.color"
               :min="512"
-              :max="1024"
+              :max="768"
               step="64"
               ticks="always"
               tick-size="2"
@@ -55,10 +64,11 @@
               inverse-label
               ></v-slider>
 
-            <v-subheader class="pl-0">
+            <v-subheader>
               Scale
             </v-subheader>
             <v-slider 
+              class="ml-4 mr-4"
               :label="scale.val"
               v-model="scale.val"
               :thumb-color="scale.color"
@@ -67,35 +77,34 @@
               thumb-label
               inverse-label
               ></v-slider>
-            <v-subheader class="pl-0">
+            <v-subheader>
               Steps
             </v-subheader>
             <v-slider 
+            class="ml-4 mr-4"
               :label="steps.val"
               v-model="steps.val"
               :thumb-color="scale.color"
               :min="10"
-              :max="150"
+              :max="70"
               thumb-label
               inverse-label
               ></v-slider>
-            <v-subheader class="pl-0">
+            <v-subheader>
               Seed
             </v-subheader>
             <v-text-field
+              class="ml-4 mr-4"
               solo
               flat
               dense
               :value="seed"
             ></v-text-field>
-            <v-btn
-     
-                  solo
-                  elevation="0"
-
-                  label="save"
-                  @click="onSave"
-                  >save</v-btn>
+            <v-switch
+            class="ml-4 mr-4"
+              v-model="lock_seed"
+              label="Lock Seed"
+            ></v-switch>
     </v-navigation-drawer>
     
     <v-footer app color="transparent" height="74" inset class="pl-0">
@@ -107,7 +116,7 @@
                   solo
                   flat
                   dense
-                  v-model="prompt.val"
+                  v-model="prompt"
                   ></v-text-field>
                 <v-btn
                   class="mt-4 mr-4 mb-4"
@@ -124,7 +133,19 @@
     
   </v-app>
 </template>
+<style>
+  .imgh {
+    display: block;
+    object-fit: contain;
+    min-width:100%;
+    min-height:100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin-bottom: 4px;
+  }
+</style>
 <style >
+  
   #imgcontainer > img {
     display: block;
     object-fit: contain;
@@ -159,13 +180,18 @@
       progressInterval: {},
       alert: false,
       overlay: false,
-      prompt: { val: "magical forest painting by peter mohrbacher and georges seurat"},
+      last_prompt : '',
+      last_seed : 0,
+      prompt: "product photo, beautiful vase, zen garden, still life, photoreal, bokeh, depth of field, calming",
       showImage: false,
       currentImageData: 0,
       currentImageUrl: "test.html",
       currentImageName: "no_name.jpg",
-      seed:0,
+      image_history: [],
+      seed:42,
+      lock_seed: true,
       image_id:'',
+      
       generatedImage: "imagepath",
       alertMessage: "Warning, generated images contained some not safe for work content and have been replaced.",
       links: [
@@ -177,7 +203,7 @@
       width: { label: 'width', val: 512, color: 'blue lighten-1'},
       height: { label: 'height', val: 512, color: 'blue lighten-1'},
       scale: { label: 'scale', val: 7, color: 'blue lighten-1' },
-      steps: { label: 'steps', val: 50, color: 'blue lighten-1' },
+      steps: { label: 'steps', val: 25, color: 'blue lighten-1' },
     }),
     created() {
       window.addEventListener("resize", this.onWindowResize);
@@ -185,16 +211,38 @@
     destroyed() {
       window.removeEventListener("resize", this.onWindowResize);
     },
+    watch :{
+      seed:{
+        immediate: true,
+        handler(){
+          this.last_prompt = ''
+        }
+      },
+      lock_seed:{
+        immediate: true,
+        handler(){
+          this.last_prompt = ''
+        }
+      }
+    },
     methods: {
-      onSave() {
-        var a = document.createElement("a");
-        a.href = this.currentImageUrl,
-        a.download = this.currentImageName,
-        a.click()  
-        console.log(a.href)
+      image_click (event) {
+        var source = event.target || event.srcElement;
+        this.prompt = ''+(source.getAttribute('prompt'));
+        this.seed = parseInt(''+(source.getAttribute('seed')));
+        this.lock_seed = true;
+        var display_image = document.getElementById('display_image')
+        display_image.setAttribute('src', source.getAttribute('src'))
+        this.last_prompt = '';
       },
       onGenerate(){
-        fetch(this.api_server + "/submit_prompt/?q=" + this.prompt.val + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val)
+        if (this.last_prompt == this.prompt && this.last_seed == this.seed){
+          this.lock_seed = false;
+        }
+        var request_url = this.api_server + "/submit_prompt/?q=" + this.prompt + "&w=" + this.width.val + "&h=" + this.height.val + "&scale=" + this.scale.val + "&steps=" + this.steps.val;
+        if(this.lock_seed) request_url = request_url + '&seed=' + this.seed;
+        this.last_seed = this.seed;
+        fetch(request_url)
           .then(response => response.json())
           .then(data => {
             if(data.result == "OK"){
@@ -212,6 +260,14 @@
                       this.progress = 0
                       clearInterval(this.progressInterval)
                       var imgUrl = this.api_server + "/download_prompt/?id=" + this.image_id
+                      this.image_history.unshift( {
+                        url : imgUrl,
+                        id: data.id,
+                        seed: this.seed,
+                        prompt : this.prompt
+                      });
+                      this.last_prompt  = this.prompt;
+                      
                       document.querySelector('#imgcontainer').innerHTML = ''
                       
                       let img = document.createElement('img')
@@ -224,15 +280,16 @@
                       }
                       downloadingImage.src = imgUrl;
                       document.querySelector('#imgcontainer').appendChild(img)
-                      document.querySelector('#historycontainer').insertBefore(imgHist, document.querySelector('#historycontainer').firstChild);
-                  
+
+                      this.onWindowResize()
+
                     } else {
                       this.progress = 50
                     }
                   });
                 }
                 this.progress += 10
-              }, 600);
+              }, 750);
             } else if (data.result == "ERROR") {
               this.warning(data.message);
             }
